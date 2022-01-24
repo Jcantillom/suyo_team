@@ -1,0 +1,157 @@
+<html>
+<head>
+    <style>
+        #map {
+            height: calc(100% - 100px);
+            position: initial !important;
+        }
+
+        .btn_add {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background-color: #b0b0b0;
+            left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <title>Simple Markers</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script>
+        function initMap() {
+            const myLatLng = {lat: -25.363, lng: 131.044};
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 4,
+                center: myLatLng,
+            });
+
+            getData()
+        }
+
+        async function getData() {
+            const response = await fetch('http://127.0.0.1:8000/suyo/locations/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const myJson = await response.json(); //extract JSON from the http response
+            if (myJson.results.length > 0) {
+                const myLatLng = {
+                    lat: parseFloat(myJson.results[0].latitude),
+                    lng: parseFloat(myJson.results[0].longitude)
+                };
+                const map = new google.maps.Map(document.getElementById("map"), {
+                    zoom: 6,
+                    center: myLatLng,
+                });
+
+                myJson.results.forEach(function (valor, indice, array) {
+                    var myLatLng = {lat: parseFloat(valor.latitude), lng: parseFloat(valor.longitude)};
+                    new google.maps.Marker({
+                        position: myLatLng,
+                        map,
+                        label: {
+                            color: 'white',
+                            fontWeight: 'bold',
+                            text: valor.name_location,
+                        }
+                    });
+                })
+            }
+            loadForm();
+            // do something with myJson
+        }
+
+        async function createLocation(){
+            var obj = {
+                "name_location": document.getElementById("name_location").value,
+                "latitude": document.getElementById("latitude").value,
+                "longitude": document.getElementById("longitude").value,
+                "user":[1]
+            }
+            const response = await fetch('http://127.0.0.1:8000/suyo/locations/', {
+                method: 'POST',
+                body:JSON.stringify(obj),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            window.location.reload();
+        }
+
+        function loadForm() {
+            var updateButton = document.getElementById('updateDetails');
+            var cancelButton = document.getElementById('cancel');
+            var dialog = document.getElementById('favDialog');
+            dialog.returnValue = 'favAnimal';
+
+            function openCheck(dialog) {
+                if (dialog.open) {
+                    console.log('Dialog open');
+                } else {
+                    console.log('Dialog closed');
+                }
+            }
+
+            // Update button opens a modal dialog
+            updateButton.addEventListener('click', function () {
+                dialog.showModal();
+                openCheck(dialog);
+            });
+
+            // Form cancel button closes the dialog box
+            cancelButton.addEventListener('click', function () {
+                dialog.close('animalNotChosen');
+                openCheck(dialog);
+            });
+
+        }
+    </script>
+</head>
+<body>
+<div id="map"></div>
+<div class="btn_add" id="updateDetails">Add</div>
+<dialog id="favDialog">
+    <form method="dialog" id="frmLocation">
+        <section>
+            <p>
+                <label for="favAnimal">Nombre:</label>
+                <input type="text" id="name_location">
+                <br>
+                <label for="latitude">Latitude:</label>
+                <input type="text" id="latitude">
+                <br>
+                <label for="latitude">Longitude:</label>
+                <input type="text" id="longitude">
+            </p>
+        </section>
+        <menu>
+            <button id="cancel" type="reset">Cancel</button>
+            <button type="submit" onclick="createLocation()">Confirm</button>
+        </menu>
+    </form>
+</dialog>
+<!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+<script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBdIzjVniadzXXqVhqXt3nJ5C9rypSflfU&callback=initMap&v=weekly&channel=2"
+        async
+>
+</script>
+</body>
+</html>
